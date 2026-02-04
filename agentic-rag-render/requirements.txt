@@ -1,0 +1,10 @@
+flask
+gunicorn
+langchain
+langchain-community
+langchain-chroma
+transformers
+sentence-transformers
+pypdf
+torch
+chromadb
