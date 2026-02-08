@@ -1,28 +1,30 @@
-from src.agent import agent_controller
 from src.loader import load_docs
-from src.chunker import chunk_docs
 from src.vectorstore import create_retriever
 from src.llm import load_llm
 
-import os
+def load_and_index_pdfs(data_path: str):
+    docs = load_docs(data_path)
+    retriever = create_retriever(docs)
+    return retriever
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_PATH = os.path.join(BASE_DIR, "data")
 
+def rag_answer(question: str):
+    llm = load_llm()
 
-docs = load_docs(DATA_PATH)
-chunks = chunk_docs(docs)
-retriever = create_retriever(chunks)
-llm = load_llm()
+    retriever = load_and_index_pdfs("data")
 
-def rag_answer(query):
-    action = agent_controller(query)
+    docs = retriever.get_relevant_documents(question)
+    context = "\n".join([d.page_content for d in docs])
 
-    if action == "search":
-        results = retriever.invoke(query)
-        context = "\n".join([r.page_content for r in results])
-        prompt = f"Use this context:\n{context}\n\nAnswer:\n{query}"
-    else:
-        prompt = query
+    prompt = f"""
+    Answer the question using the context below.
 
-    return llm(prompt)[0]["generated_text"]
+    Context:
+    {context}
+
+    Question:
+    {question}
+    """
+
+    response = llm(prompt)
+    return response, "retrieval"
