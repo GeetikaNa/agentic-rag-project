@@ -21,15 +21,15 @@ def rag_answer(question: str):
     context = "\n".join(d.page_content for d in docs[:3])  # hard cap
 
     prompt = f"""
-    Answer the question in ONE clear paragraph.
-    Do NOT repeat the context.
-    Be concise and specific.
+    
+    
+    Question:
+    {question}
+
 
     Context:
     {context}
 
-    Question:
-    {question}
     """
 
     response = llm(prompt)
