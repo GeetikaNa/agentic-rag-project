@@ -13,7 +13,7 @@ def rag_answer(question: str):
 
     retriever = load_and_index_pdfs("data")
 
-    docs = retriever.get_relevant_documents(question)
+    docs = retriever.invoke(question)
     context = "\n".join([d.page_content for d in docs])
 
     prompt = f"""
