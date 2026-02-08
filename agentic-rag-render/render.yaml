@@ -2,8 +2,6 @@ services:
   - type: web
     name: agentic-rag
     env: python
-    plan: free
-    startCommand: gunicorn app:app
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.10
+    rootDir: agentic-rag-render
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
