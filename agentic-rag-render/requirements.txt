@@ -1,8 +1,7 @@
-transformers==4.36.2
-torch
-sentence-transformers
+streamlit
 langchain
+langchain-community
 langchain-groq
 chromadb
+sentence-transformers
 pypdf
-streamlit
