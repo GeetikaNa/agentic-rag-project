@@ -1,10 +1,8 @@
-flask
-gunicorn
-langchain
-langchain-community
-langchain-chroma
-transformers
-sentence-transformers
-pypdf
+transformers==4.36.2
 torch
+sentence-transformers
+langchain
+langchain-groq
 chromadb
+pypdf
+streamlit
