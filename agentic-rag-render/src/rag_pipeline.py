@@ -23,28 +23,35 @@ def rag_answer(question: str):
         _retriever = load_and_index_pdfs("data")
 
     docs = _retriever.invoke(question)
+
+    if not docs:
+        return "No relevant information found in the document.", "retrieval"
+
     context = "\n".join(d.page_content for d in docs)
 
+    # 🔑 FLAN-T5-OPTIMIZED PROMPT
     prompt = f"""
-Answer the question clearly using the context.
-
 Context:
 {context}
 
 Question:
-{question}
+What does the document say about {question}?
+
+Answer in ONE clear paragraph. Do not repeat the context.
 """
 
     result = _llm(prompt)
 
-    # ✅ CORRECT extraction for FLAN-T5
     if isinstance(result, list):
         answer = result[0]["generated_text"].strip()
     else:
         answer = str(result).strip()
 
-    # ✅ Safety fallback
+    # 🧹 Remove prompt echo if it appears
+    if "Context:" in answer:
+        answer = answer.split("Answer")[-1].strip()
+
     if not answer:
-        answer = "No relevant information found in the uploaded documents."
+        answer = "The document does not contain a clear explanation for this query."
 
     return answer, "retrieval"
