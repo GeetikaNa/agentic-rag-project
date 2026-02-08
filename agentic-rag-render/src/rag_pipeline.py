@@ -25,30 +25,26 @@ def rag_answer(question: str):
     docs = _retriever.invoke(question)
     context = "\n".join(d.page_content for d in docs)
 
-    # 🔒 TIGHT PROMPT (NO ECHO)
     prompt = f"""
-Context information:
+Answer the question clearly using the context.
+
+Context:
 {context}
 
 Question:
 {question}
-
-Answer (ONLY the answer, no context, no rules, no lists):
 """
 
     result = _llm(prompt)
 
-    # ✅ HuggingFace pipeline output handling
-    if isinstance(result, list) and "generated_text" in result[0]:
-        answer = result[0]["generated_text"]
+    # ✅ CORRECT extraction for FLAN-T5
+    if isinstance(result, list):
+        answer = result[0]["generated_text"].strip()
     else:
-        answer = str(result)
+        answer = str(result).strip()
 
-    # 🧹 HARD CLEANUP (IMPORTANT)
-    answer = answer.replace(prompt, "").strip()
-
-    # 🧠 Keyword guard
-    if len(question.split()) <= 2 and len(answer) > 600:
-        answer = answer.split(".")[0] + "."
+    # ✅ Safety fallback
+    if not answer:
+        answer = "No relevant information found in the uploaded documents."
 
     return answer, "retrieval"
