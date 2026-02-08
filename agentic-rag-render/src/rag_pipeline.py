@@ -28,20 +28,14 @@ def rag_answer(question: str):
     docs = retriever.invoke(question)
     context = "\n\n".join(d.page_content for d in docs)
 
-    # 🔥 STRONG RAG PROMPT (THIS FIXES YOUR BAD ANSWERS)
     prompt = f"""
-You are an expert content analyst.
+You are an expert academic assistant.
 
-The context below comes from a document that contains tables,
-lists, and structured content.
-
-RULES:
-- Do NOT repeat the table or raw document text
-- Do NOT dump all rows
-- Extract ONLY information relevant to the question
-- Explain clearly in natural language
-- If the question is a single word (like a character name),
-  explain what the document says about that topic.
+Rules:
+- Do NOT dump raw text or tables
+- Summarize clearly
+- Answer only what the question asks
+- If the query is a keyword, explain it using the document
 
 Context:
 {context}
@@ -49,9 +43,15 @@ Context:
 Question:
 {question}
 
-Answer in one clear, concise paragraph.
+Answer in one clear paragraph.
 """
 
     response = llm(prompt)
 
-    return response.strip(), "retrieval"
+    # 🔥 HANDLE HUGGINGFACE PIPELINE OUTPUT
+    if isinstance(response, list) and "generated_text" in response[0]:
+        answer = response[0]["generated_text"]
+    else:
+        answer = str(response)
+
+    return answer.strip(), "retrieval"
