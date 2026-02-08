@@ -4,7 +4,11 @@ from src.chunker import chunk_docs
 from src.vectorstore import create_retriever
 from src.llm import load_llm
 
-DATA_PATH = "data"
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_PATH = os.path.join(BASE_DIR, "data")
+
 
 docs = load_docs(DATA_PATH)
 chunks = chunk_docs(docs)
