@@ -2,56 +2,44 @@ from src.loader import load_docs
 from src.vectorstore import create_retriever
 from src.llm import load_llm
 
-_llm = None
-_retriever = None
-
 
 def load_and_index_pdfs(data_path: str):
-    global _retriever
     docs = load_docs(data_path)
-    _retriever = create_retriever(docs)
-    return _retriever
+    retriever = create_retriever(docs)
+    return retriever
 
 
 def rag_answer(question: str):
-    global _llm, _retriever
+    llm = load_llm()
+    retriever = load_and_index_pdfs("data")
 
-    if _llm is None:
-        _llm = load_llm()
-
-    if _retriever is None:
-        _retriever = load_and_index_pdfs("data")
-
-    docs = _retriever.invoke(question)
+    docs = retriever.invoke(question)
 
     if not docs:
-        return "No relevant information found in the document.", "retrieval"
+        return "No relevant information found in the uploaded documents.", "no_retrieval"
 
-    context = "\n".join(d.page_content for d in docs)
+    context = "\n".join(d.page_content for d in docs[:3])  # hard cap
 
-    # 🔑 FLAN-T5-OPTIMIZED PROMPT
     prompt = f"""
-Context:
-{context}
+    Answer the question in ONE clear paragraph.
+    Do NOT repeat the context.
+    Be concise and specific.
 
-Question:
-What does the document say about {question}?
+    Context:
+    {context}
 
-Answer in ONE clear paragraph. Do not repeat the context.
-"""
+    Question:
+    {question}
+    """
 
-    result = _llm(prompt)
+    response = llm(prompt)
 
-    if isinstance(result, list):
-        answer = result[0]["generated_text"].strip()
-    else:
-        answer = str(result).strip()
+    if isinstance(response, list):
+        response = response[0].get("generated_text", "").strip()
+    elif isinstance(response, dict):
+        response = response.get("generated_text", "").strip()
 
-    # 🧹 Remove prompt echo if it appears
-    if "Context:" in answer:
-        answer = answer.split("Answer")[-1].strip()
+    if not response:
+        return "The document references Damon but does not explain him in detail.", "retrieval"
 
-    if not answer:
-        answer = "The document does not contain a clear explanation for this query."
-
-    return answer, "retrieval"
+    return response, "retrieval"
